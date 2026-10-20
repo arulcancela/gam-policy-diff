@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Instalar el proyecto
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Revisar estilo
+        run: |
+          ruff check src tests
+          ruff format --check src tests
+      - name: Ejecutar tests
+        run: pytest --cov-fail-under=85
+      - name: Probar la demo
+        run: gam-policy-diff --demo --out /tmp/report.html

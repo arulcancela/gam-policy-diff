@@ -1,0 +1,16 @@
+policy_id,policy_name,scope_type,scope_name,value,tenant
+mail_retention_days,Retención de correo (días),tenant,,2555,acme-origen
+drive_sharing_external,Compartición externa en Drive,tenant,,anyone_with_link,acme-origen
+session_length_hours,Duración de la sesión (horas),tenant,,12,acme-origen
+enforce_2sv,Exigir verificación en dos pasos,tenant,,false,acme-origen
+alias_domain,Dominio de alias,tenant,,acme-origen.test,acme-origen
+drive_default_sharing,Compartición predeterminada en Drive,OU,/Direccion,anyone_with_link,acme-origen
+drive_sharing_external,Compartición externa en Drive,OU,/Direccion,off,acme-origen
+calendar_external_invites,Invitaciones externas de calendario,OU,/Direccion,allow,acme-origen
+drive_sharing_external,Compartición externa en Drive,OU,/Ventas,anyone_with_link,acme-origen
+session_length_hours,Duración de la sesión (horas),OU,/Ventas,12,acme-origen
+mail_forwarding_external,Reenvío automático externo,OU,/Ventas,allow,acme-origen
+drive_sharing_external,Compartición externa en Drive,OU,/Tiendas,anyone_with_link,acme-origen
+calendar_default_view,Vista predeterminada del calendario,OU,/Tiendas,week,acme-origen
+group_who_can_join,Quién puede unirse al grupo,group,ventas-externos,anyone,acme-origen
+group_discovery,Visibilidad del grupo en el directorio,group,direccion-staff,true,acme-origen
