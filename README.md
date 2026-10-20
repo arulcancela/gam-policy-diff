@@ -48,6 +48,7 @@ drive_sharing_external,Compartición externa en Drive,OU,/Ventas,anyone_with_lin
 - `scope_name`: vacío cuando el ámbito es el tenant completo.
 - `tenant`: si falta, se usa el nombre del fichero.
 - En JSON se acepta una lista de objetos o un objeto con la clave `policies`.
+- La exportación ancha de `gam export policy` (XLSX con cientos de columnas `setting.value.*`) no se acepta directamente; hay que convertirla a filas normalizadas.
 
 Si tus columnas tienen otros nombres, usa un mapeo con el formato `campo=columna`:
 

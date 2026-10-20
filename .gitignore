@@ -14,3 +14,6 @@ report.json
 
 # Exportaciones locales: pueden contener datos reales
 exports/
+*.xlsx
+*.xls
+*.xlsm
