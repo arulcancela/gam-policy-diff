@@ -147,12 +147,19 @@ Las reglas viven en [rules.py](src/gam_policy_diff/rules.py), en `DECISION_TABLE
 
 > **Datos reales.** No metas exportaciones reales en el repositorio ni las compartas sin autorización y anonimización. La herramienta no las necesita para funcionar. Si pruebas con un tenant real, usa una cuenta dedicada con doble verificación, permisos de solo lectura y revoca el acceso al terminar. No le des credenciales de superadmin a nadie para ejecutar esta herramienta. La CI solo permite los dos CSV ficticios de `fixtures/`; cualquier otro CSV, JSON, XLSX o informe versionado hace fallar el pipeline.
 
-## Cómo se usa en un discovery, en cuatro pasos
+## Cómo se usa en un discovery
 
-1. Define el alcance: tenant, OUs y grupos que afectan al día D. Pide los valores efectivos, no solo los heredados.
-2. Exporta con GAM. Si usas el adaptador XLSX, comprueba que los cuatro ajustes cubiertos son los que te interesan; para el resto, normaliza a las seis columnas. Prueba primero `--demo` y después con una copia anonimizada; no uses el repositorio para los datos reales.
-3. Ejecuta la comparación y revisa primero `rompe_flujo`. Contrasta cada hallazgo con quien opera el tenant: un cambio puede ser intencionado.
-4. Entrega el HTML y usa el JSON para seguimiento. Repite la comparación tras los cambios y conserva la fecha del informe.
+1. **Exporta.** Saca de GAM los valores efectivos de origen y destino por tenant, OU y grupo. Si usas el adaptador XLSX, comprueba que los cuatro ajustes cubiertos entran en el alcance; para el resto, prepara CSV o JSON normalizado.
+2. **Compara.** Ejecuta `gam-policy-diff --old origen --new destino --out report.html`. Revisa el código de salida: 0 con informe, 1 con error y 2 sin diferencias.
+3. **Revisa los tres cubos.** Empieza por `rompe_flujo`, sigue por `requiere_formacion` y usa `sin_impacto` para confirmar lo que no cambia. Contrasta cada hallazgo con quien opera el tenant antes de darlo por bueno.
+4. **Llévalo a la reunión.** Presenta el HTML, separa lo que hay que comunicar de lo que hay que cambiar y usa el JSON para seguimiento. Repite la comparación después de los cambios.
+
+## Proyectos relacionados
+
+- [workspace-tenant-auditor](https://github.com/arulcancela/workspace-tenant-auditor): auditoría de seguridad y cumplimiento del tenant, con hallazgos priorizados por severidad.
+- [gam-policy-diff](https://github.com/arulcancela/gam-policy-diff): comparación de políticas y traducción de los cambios a impacto para el usuario.
+
+El auditor responde a “qué riesgo tiene el tenant”; gam-policy-diff responde a “qué cambia para las personas”. Juntos cubren la decisión de una migración: seguridad y adopción.
 
 ## Licencia
 
