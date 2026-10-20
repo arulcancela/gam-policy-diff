@@ -10,9 +10,11 @@ Ejemplo de migración: una empresa pasa de un tenant con OUs por país a otro co
 
 ## Captura
 
-![Informe de ejemplo generado con los fixtures](docs/informe-demo.png)
+![Vista general del informe de ejemplo](docs/informe-demo.png)
 
-Informe generado con los fixtures ficticios de `acme-origen` y `acme-destino`. El informe no contiene datos reales.
+![Detalle del bloque Requiere formación](docs/informe-demo-detalle.png)
+
+Capturas generadas con los fixtures ficticios de `acme-origen` y `acme-destino`. No contienen datos reales.
 
 ## Instalación y uso
 

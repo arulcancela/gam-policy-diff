@@ -437,8 +437,8 @@ tbody tr:nth-child(even) { background: #fbfcfd; }
 }
 .value.missing { font-family: inherit; color: var(--muted); font-style: italic; }
 .badge {
-  display: inline-block; padding: 3px 7px; border-radius: 4px;
-  font-size: .73rem; font-weight: 700; white-space: nowrap;
+  display: inline-block; max-width: 100%; padding: 3px 7px; border-radius: 4px;
+  font-size: .73rem; font-weight: 700; white-space: normal;
 }
 .badge-rompe_flujo { color: var(--breaks); background: var(--breaks-soft); }
 .badge-requiere_formacion { color: var(--training); background: var(--training-soft); }
@@ -474,7 +474,7 @@ tbody tr:nth-child(even) { background: #fbfcfd; }
   .value { font-size: 7pt; }
   thead { display: table-header-group; }
   tr { break-inside: avoid; }
-  .badge { border: 1px solid currentColor; white-space: normal; font-size: 6.4pt; }
+  .badge { border: 1px solid currentColor; font-size: 6.4pt; }
   a { color: inherit; text-decoration: none; }
   .report-footer { margin-top: 20px; }
 }
