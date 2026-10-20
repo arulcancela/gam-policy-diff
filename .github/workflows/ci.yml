@@ -17,6 +17,19 @@ jobs:
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Comprobar que no hay datos reales versionados
+        run: |
+          allowed='^fixtures/tenant-(origen|destino)\.csv$'
+          tracked=$(git ls-files | grep -Ei '\.(csv|json|xlsx|xls|xlsm)$' | grep -vE "$allowed" || true)
+          historical=$(git log --all --name-only --pretty=format: | grep -Ei '\.(csv|json|xlsx|xls|xlsm)$' | grep -vE "$allowed" | sort -u || true)
+          reports=$(git ls-files | grep -E '(^|/)report\.(html|json)$' || true)
+          if [ -n "$tracked" ] || [ -n "$historical" ] || [ -n "$reports" ]; then
+            echo "Hay ficheros de datos o informes no permitidos:" >&2
+            printf '%s\n%s\n%s\n' "$tracked" "$historical" "$reports" >&2
+            exit 1
+          fi
       - name: Configurar Python
         uses: actions/setup-python@v7
         with:

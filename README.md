@@ -143,7 +143,7 @@ Las reglas viven en [rules.py](src/gam_policy_diff/rules.py), en `DECISION_TABLE
 - No tiene autenticación, base de datos, frontend ni integración directa con GAM.
 - No sustituye una prueba en un tenant de staging ni la revisión humana de cada cambio.
 
-> **Datos reales.** No metas exportaciones reales en el repositorio ni las compartas sin autorización y anonimización. La herramienta no las necesita para funcionar. Si pruebas con un tenant real, usa una cuenta dedicada con doble verificación, permisos de solo lectura y revoca el acceso al terminar. No le des credenciales de superadmin a nadie para ejecutar esta herramienta.
+> **Datos reales.** No metas exportaciones reales en el repositorio ni las compartas sin autorización y anonimización. La herramienta no las necesita para funcionar. Si pruebas con un tenant real, usa una cuenta dedicada con doble verificación, permisos de solo lectura y revoca el acceso al terminar. No le des credenciales de superadmin a nadie para ejecutar esta herramienta. La CI solo permite los dos CSV ficticios de `fixtures/`; cualquier otro CSV, JSON, XLSX o informe versionado hace fallar el pipeline.
 
 ## Cómo se usa en un discovery, en cuatro pasos
 

@@ -17,3 +17,5 @@ exports/
 *.xlsx
 *.xls
 *.xlsm
+.~lock.*
+~$*
