@@ -1,4 +1,4 @@
-"""Lectura de exportaciones de GAM en CSV o JSON."""
+"""Lectura de exportaciones de GAM en CSV, JSON o XLSX de Policy API."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import DuplicatePolicyError, InputError
+from .gam_export import load_gam_policy_export
 from .models import Policy, PolicySet, ScopeType
 from .normalization import normalize_header, normalize_identifier
 
@@ -31,6 +32,15 @@ def load_policy_set(
 ) -> PolicySet:
     """Carga un fichero de políticas y lo devuelve indexado por política y ámbito."""
     file_path = Path(path)
+    suffix = file_path.suffix.lower()
+    if suffix == ".xlsx":
+        if column_map:
+            raise InputError(
+                "--map no se aplica a exportaciones XLSX; el adaptador usa las columnas de GAM"
+            )
+        return load_gam_policy_export(file_path)
+    if suffix in {".xls", ".xlsm"}:
+        raise InputError(f"el formato {suffix} no está soportado; guarda la exportación como .xlsx")
     text = _read_text(file_path)
     if not text.strip():
         raise InputError(f"el fichero {file_path} está vacío")

@@ -26,12 +26,20 @@ def build_parser() -> argparse.ArgumentParser:
         prog="gam-policy-diff",
         description="Compara dos exportaciones de políticas de Google Workspace.",
     )
-    parser.add_argument("--old", metavar="FICHERO", help="exportación del tenant de origen")
-    parser.add_argument("--new", metavar="FICHERO", help="exportación del tenant de destino")
+    parser.add_argument(
+        "--old",
+        metavar="FICHERO",
+        help="exportación del tenant de origen (CSV, JSON o XLSX de GAM)",
+    )
+    parser.add_argument(
+        "--new",
+        metavar="FICHERO",
+        help="exportación del tenant de destino (CSV, JSON o XLSX de GAM)",
+    )
     parser.add_argument(
         "--map",
         metavar="MAPEO",
-        help="mapeo de columnas: campo=columna separado por comas, o fichero JSON",
+        help="mapeo de columnas para CSV/JSON: campo=columna separado por comas, o fichero JSON",
     )
     parser.add_argument(
         "--demo",
