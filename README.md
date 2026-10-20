@@ -63,7 +63,7 @@ También puedes guardar ese mapeo en un JSON con la misma forma y pasar `--map m
 | Código | Significado |
 | --- | --- |
 | 0 | Informe generado |
-| 1 | Fichero ilegible, columna obligatoria ausente o error de escritura |
+| 1 | Error de entrada (fichero, columnas o datos) o de escritura |
 | 2 | No hay diferencias; no se escriben ficheros |
 
 Para ejecutar los tests: `pip install -e ".[dev]"` y luego `pytest`.
