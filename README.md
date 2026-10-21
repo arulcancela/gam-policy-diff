@@ -2,6 +2,8 @@
 
 Compara las políticas de dos tenants de Google Workspace a partir de exportaciones de GAM y genera un informe HTML agrupado por impacto para el usuario.
 
+La suite actual tiene 157 tests y una cobertura del 96,68 %; la CI los ejecuta en Python 3.11 y 3.12.
+
 ## Qué problema resuelve
 
 En una migración de Google Workspace, el correo suele llegar; lo que rompe el día D son las políticas que nadie comparó. Retención, compartición en Drive, doble verificación, duración de sesión, aliases, unidades organizativas, calendario y grupos pueden estar configurados de forma distinta en cada tenant y en cada ámbito. gam-policy-diff compara esas políticas por ámbito, las clasifica según el impacto para el usuario y genera un informe que se puede revisar con el cliente.
@@ -169,7 +171,6 @@ Las reglas viven en [rules.py](src/gam_policy_diff/rules.py), en `DECISION_TABLE
 ## Proyectos relacionados
 
 - [workspace-tenant-auditor](https://github.com/arulcancela/workspace-tenant-auditor): auditoría de seguridad y cumplimiento del tenant, con hallazgos priorizados por severidad.
-- [gam-policy-diff](https://github.com/arulcancela/gam-policy-diff): comparación de políticas y traducción de los cambios a impacto para el usuario.
 
 El auditor responde a “qué riesgo tiene el tenant”; gam-policy-diff responde a “qué cambia para las personas”. Juntos cubren la decisión de una migración: seguridad y adopción.
 
