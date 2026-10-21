@@ -34,9 +34,21 @@ El comando de demo usa los fixtures incluidos y escribe `report.html` y `report.
 ```bash
 gam-policy-diff --old fixtures/tenant-origen.csv --new fixtures/tenant-destino.csv --out report.html
 gam-policy-diff --old tenant-origen.xlsx --new tenant-destino.xlsx --out report.html
+# Para incluir únicamente las políticas que difieren (omitiendo las de igual valor):
+gam-policy-diff --old tenant-origen.xlsx --new tenant-destino.xlsx --changes-only --out report.html
 ```
 
 `--out` es opcional; por defecto se escribe `report.html`. El JSON se guarda al lado del HTML, con el mismo nombre: `--out informes/cliente.html` genera `informes/cliente.json`.
+`--changes-only` genera el informe y el JSON conteniendo exclusivamente las políticas con cambios efectivos entre ambos tenants.
+
+### Búsqueda y filtrado interactivo en el informe HTML
+
+El informe HTML generado es completamente autocontenido (0 peticiones a internet) e incorpora:
+- **Búsqueda en tiempo real**: filtra al escribir por política, identificador técnico, ámbito, valores o texto del impacto (atajo de teclado `/` o `Ctrl+K` para enfocar, `Escape` para limpiar).
+- **Filtro por impacto**: botones rápidos para aislar *Rompe flujo*, *Req. formación* o *Sin impacto*.
+- **Conmutador "Solo con cambios"**: alterna en el navegador entre el inventario completo y solo aquellas políticas con modificaciones efectivas.
+- **Listo para imprimir**: los controles de búsqueda y botones se ocultan automáticamente en la vista de impresión (`@media print` para formato A4).
+
 
 ### Formato de entrada
 

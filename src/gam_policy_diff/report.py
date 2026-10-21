@@ -38,6 +38,7 @@ def render_html(
     old_tenant: str,
     new_tenant: str,
     generated_on: date,
+    changes_only: bool = False,
 ) -> str:
     """Genera el documento HTML completo, sin recursos externos."""
     entries = list(entries)
@@ -53,9 +54,11 @@ def render_html(
             total=len(entries),
             changed=sum(entry.changed for entry in entries),
             counts=counts,
+            changes_only=changes_only,
         ),
         blocks="\n".join(_render_block(impact, entries) for impact in IMPACT_ORDER),
         note=REPORT_NOTE,
+        filter_script=_FILTER_SCRIPT,
     )
 
 
@@ -65,6 +68,7 @@ def render_json(
     old_tenant: str,
     new_tenant: str,
     generated_on: date,
+    changes_only: bool = False,
 ) -> str:
     """Genera el JSON con la misma información que el informe."""
     payload = _json_payload(
@@ -72,6 +76,7 @@ def render_json(
         old_tenant=old_tenant,
         new_tenant=new_tenant,
         generated_on=generated_on,
+        changes_only=changes_only,
     )
     return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
 
@@ -83,6 +88,7 @@ def write_reports(
     new_tenant: str,
     html_path: str | Path,
     generated_on: date | None = None,
+    changes_only: bool = False,
 ) -> tuple[Path, Path]:
     """Escribe el HTML y el JSON hermano; devuelve las dos rutas."""
     destination = Path(html_path)
@@ -97,6 +103,7 @@ def write_reports(
             old_tenant=old_tenant,
             new_tenant=new_tenant,
             generated_on=report_date,
+            changes_only=changes_only,
         ),
     )
     _write_text(
@@ -106,6 +113,7 @@ def write_reports(
             old_tenant=old_tenant,
             new_tenant=new_tenant,
             generated_on=report_date,
+            changes_only=changes_only,
         ),
     )
     return destination, json_path
@@ -119,15 +127,18 @@ def _render_header(
     total: int,
     changed: int,
     counts: Mapping[Impact, int],
+    changes_only: bool = False,
 ) -> str:
     links = "".join(
         f'<a class="cube-link cube-{impact.value}" href="#bloque-{impact.value}">'
         f'{_escape(impact.label)}<span class="count">{counts[impact]}</span></a>'
         for impact in IMPACT_ORDER
     )
+    kicker_extra = ' <span class="badge-changes-only">solo cambios</span>' if changes_only else ""
+    toggle_checked = " checked" if changes_only else ""
     return f"""
     <header class="report-header">
-      <p class="kicker">Google Workspace · migración de tenant</p>
+      <p class="kicker">Google Workspace · migración de tenant{kicker_extra}</p>
       <h1>Informe de diferencias de políticas</h1>
       <p class="tenants">
         <span class="tenant-label">Origen</span> <strong>{_escape(old_tenant)}</strong>
@@ -140,6 +151,55 @@ def _render_header(
         <div><dt>Cambios</dt><dd>{changed}</dd></div>
       </dl>
       <nav class="cube-nav no-print" aria-label="Resumen por impacto">{links}</nav>
+      <div class="report-controls no-print" aria-label="Controles de búsqueda y filtrado">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="Buscar por política, ID, ámbito, valor o impacto... (/)"
+            aria-label="Buscar políticas"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button
+            type="button"
+            id="clear-search"
+            class="clear-search"
+            aria-label="Limpiar búsqueda"
+            hidden
+          >&times;</button>
+        </div>
+        <div class="filter-actions">
+          <label
+            class="toggle-control"
+            title="Muestra solo las políticas que difieren entre origen y destino"
+          >
+            <input type="checkbox" id="toggle-changed"{toggle_checked}>
+            <span class="toggle-label">Solo con cambios</span>
+          </label>
+          <div class="impact-filters" role="group" aria-label="Filtrar por impacto">
+            <button type="button" class="chip chip-all active" data-filter="all">Todas</button>
+            <button
+              type="button"
+              class="chip chip-breaks"
+              data-filter="rompe_flujo"
+            >Rompe flujo</button>
+            <button
+              type="button"
+              class="chip chip-training"
+              data-filter="requiere_formacion"
+            >Req. formación</button>
+            <button
+              type="button"
+              class="chip chip-neutral"
+              data-filter="sin_impacto"
+            >Sin impacto</button>
+          </div>
+        </div>
+        <div class="search-status" id="search-status" aria-live="polite"></div>
+      </div>
     </header>
 """
 
@@ -216,8 +276,9 @@ def _render_table(entries: Sequence[DiffEntry]) -> str:
 
 
 def _render_row(entry: DiffEntry) -> str:
+    changed_attr = "true" if entry.changed else "false"
     return f"""
-                <tr>
+                <tr data-impact="{entry.impact.value}" data-changed="{changed_attr}">
                   <td class="policy-cell"><strong>{_escape(entry.policy_name)}</strong>
                     <span class="policy-id">{_escape(entry.policy_id)}</span></td>
                   <td>{_escape(entry.scope_label)}</td>
@@ -268,6 +329,7 @@ def _json_payload(
     old_tenant: str,
     new_tenant: str,
     generated_on: date,
+    changes_only: bool = False,
 ) -> dict[str, object]:
     counts = Counter(entry.impact for entry in entries)
     ordered = sorted(entries, key=_report_sort_key)
@@ -278,6 +340,7 @@ def _json_payload(
         "new_tenant": new_tenant,
         "policies_compared": len(entries),
         "changes": sum(entry.changed for entry in entries),
+        "changes_only": changes_only,
         "summary": {impact.value: counts[impact] for impact in IMPACT_ORDER},
         "entries": [_entry_payload(entry) for entry in ordered],
     }
@@ -445,6 +508,146 @@ tbody tr:nth-child(even) { background: #fbfcfd; }
 .badge-sin_impacto { color: var(--neutral); background: var(--neutral-soft); }
 .reason { color: #33414d; }
 .empty { margin: 12px 0 12px 26px; color: var(--muted); }
+tr[hidden], .scope-group[hidden], [hidden] { display: none !important; }
+.report-controls {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 18px 0 10px;
+}
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: .85rem;
+  opacity: .6;
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  font-size: .92rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(23, 33, 43, 0.08);
+}
+.search-input::placeholder {
+  color: var(--muted);
+}
+.clear-search {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.clear-search:hover {
+  color: var(--ink);
+  background: var(--line);
+}
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-control input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+.impact-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.chip.active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.chip-breaks.active {
+  background: var(--breaks);
+  border-color: var(--breaks);
+  color: #fff;
+}
+.chip-training.active {
+  background: var(--training);
+  border-color: var(--training);
+  color: #fff;
+}
+.chip-neutral.active {
+  background: var(--neutral);
+  border-color: var(--neutral);
+  color: #fff;
+}
+.search-status {
+  margin-top: 8px;
+  font-size: .82rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+.badge-changes-only {
+  display: inline-block;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--breaks-soft);
+  color: var(--breaks);
+  margin-left: 8px;
+}
+.block-empty-filter {
+  margin: 12px 0 12px 26px;
+  color: var(--muted);
+}
 .report-footer {
   border-top: 1px solid var(--line); margin-top: 36px; padding-top: 14px;
   color: var(--muted); font-size: .78rem;
@@ -453,6 +656,7 @@ tbody tr:nth-child(even) { background: #fbfcfd; }
   .report { padding: 24px 16px 40px; }
   .block-note, .scope-nav, .scope-group { margin-left: 14px; }
   .facts { display: grid; grid-template-columns: 1fr; }
+  .filter-actions { flex-direction: column; align-items: flex-start; }
 }
 @media print {
   @page { size: A4; margin: 14mm 12mm; }
@@ -480,6 +684,145 @@ tbody tr:nth-child(even) { background: #fbfcfd; }
 }
 """
 
+_FILTER_SCRIPT = """<script id="report-filter-script">
+(function() {
+  var searchInput = document.getElementById("search-input");
+  var clearBtn = document.getElementById("clear-search");
+  var toggleChanged = document.getElementById("toggle-changed");
+  var statusEl = document.getElementById("search-status");
+  var chipButtons = Array.from(document.querySelectorAll(".chip[data-filter]"));
+  var activeImpact = "all";
+
+  if (!searchInput) return;
+
+  var rows = Array.from(document.querySelectorAll("tbody tr"));
+  var totalRows = rows.length;
+
+  var rowData = rows.map(function(row) {
+    return {
+      el: row,
+      text: (row.textContent || "").toLowerCase(),
+      impact: row.getAttribute("data-impact"),
+      changed: row.getAttribute("data-changed") === "true",
+      scopeGroup: row.closest(".scope-group"),
+      block: row.closest(".block")
+    };
+  });
+
+  function applyFilter() {
+    var query = (searchInput.value || "").trim().toLowerCase();
+    var onlyChanged = toggleChanged ? toggleChanged.checked : false;
+    if (clearBtn) {
+      clearBtn.hidden = !query;
+    }
+
+    var visibleCount = 0;
+    var scopeVisibleCounts = new Map();
+    var blockVisibleCounts = new Map();
+
+    rowData.forEach(function(item) {
+      var matchesSearch = !query || item.text.indexOf(query) !== -1;
+      var matchesImpact = activeImpact === "all" || item.impact === activeImpact;
+      var matchesChanged = !onlyChanged || item.changed;
+      var visible = matchesSearch && matchesImpact && matchesChanged;
+
+      item.el.hidden = !visible;
+      if (visible) {
+        visibleCount++;
+        if (item.scopeGroup) {
+          var curScope = scopeVisibleCounts.get(item.scopeGroup) || 0;
+          scopeVisibleCounts.set(item.scopeGroup, curScope + 1);
+        }
+        if (item.block) {
+          blockVisibleCounts.set(item.block, (blockVisibleCounts.get(item.block) || 0) + 1);
+        }
+      }
+    });
+
+    document.querySelectorAll(".scope-group").forEach(function(group) {
+      var count = scopeVisibleCounts.get(group) || 0;
+      group.hidden = count === 0;
+    });
+
+    document.querySelectorAll(".block").forEach(function(block) {
+      var count = blockVisibleCounts.get(block) || 0;
+      var emptyMsg = block.querySelector(".block-empty-filter");
+      var originalEmpty = block.querySelector(".empty:not(.block-empty-filter)");
+      if (originalEmpty) {
+        return;
+      }
+      if (count === 0) {
+        if (!emptyMsg) {
+          emptyMsg = document.createElement("p");
+          emptyMsg.className = "block-empty-filter empty";
+          emptyMsg.textContent = "No hay políticas en este cubo que coincidan con los filtros.";
+          block.appendChild(emptyMsg);
+        }
+        emptyMsg.hidden = false;
+      } else if (emptyMsg) {
+        emptyMsg.hidden = true;
+      }
+    });
+
+    if (query || onlyChanged || activeImpact !== "all") {
+      if (visibleCount === 0) {
+        statusEl.textContent = "No se encontraron políticas que coincidan con la búsqueda.";
+      } else {
+        statusEl.textContent = "Mostrando " + visibleCount + " de " + totalRows + " políticas.";
+      }
+    } else {
+      statusEl.textContent = "";
+    }
+  }
+
+  searchInput.addEventListener("input", applyFilter);
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", function() {
+      searchInput.value = "";
+      applyFilter();
+      searchInput.focus();
+    });
+  }
+
+  if (toggleChanged) {
+    toggleChanged.addEventListener("change", applyFilter);
+  }
+
+  chipButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      chipButtons.forEach(function(b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      activeImpact = btn.getAttribute("data-filter") || "all";
+      applyFilter();
+    });
+  });
+
+  document.addEventListener("keydown", function(e) {
+    var activeTag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+    var isInput = activeTag === "input" || activeTag === "textarea" || activeTag === "select";
+    var isK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k";
+    var isSearchKey = e.key === "/" || isK;
+    if (e.key === "Escape" && document.activeElement === searchInput) {
+      if (searchInput.value) {
+        searchInput.value = "";
+        applyFilter();
+      } else {
+        searchInput.blur();
+      }
+    } else if (isSearchKey && !isInput) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+  });
+
+  if (toggleChanged && toggleChanged.checked) {
+    applyFilter();
+  }
+})();
+</script>"""
+
 _HTML_DOCUMENT = Template(
     """<!doctype html>
 <html lang="es">
@@ -503,6 +846,7 @@ $blocks
       <p>$note</p>
     </footer>
   </div>
+  $filter_script
 </body>
 </html>
 """

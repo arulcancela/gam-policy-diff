@@ -101,8 +101,17 @@ def test_report_has_print_styles(report_html: str) -> None:
 
 
 def test_report_has_no_external_resources(report_html: str) -> None:
-    for forbidden in ("<script", "<link", "<img", "http://", "https://", "@import", "url("):
+    for forbidden in ("<script src", "<link", "<img", "http://", "https://", "@import", "url("):
         assert forbidden not in report_html
+
+
+def test_report_has_search_and_filter_controls(report_html: str) -> None:
+    assert 'id="search-input"' in report_html
+    assert 'id="toggle-changed"' in report_html
+    assert 'id="report-filter-script"' in report_html
+    assert 'data-filter="rompe_flujo"' in report_html
+    assert 'data-impact="rompe_flujo"' in report_html
+    assert 'data-changed="true"' in report_html
 
 
 def test_footer_contains_the_required_note(report_html: str) -> None:
@@ -292,3 +301,25 @@ def test_write_reports_reports_a_generic_os_error(
             html_path=tmp_path / "informe.html",
             generated_on=REPORT_DATE,
         )
+
+
+def test_render_reports_with_changes_only(entries: list[DiffEntry]) -> None:
+    html = render_html(
+        entries,
+        old_tenant="origen",
+        new_tenant="destino",
+        generated_on=REPORT_DATE,
+        changes_only=True,
+    )
+    assert "solo cambios" in html
+    assert "checked" in html
+
+    json_text = render_json(
+        entries,
+        old_tenant="origen",
+        new_tenant="destino",
+        generated_on=REPORT_DATE,
+        changes_only=True,
+    )
+    payload = json.loads(json_text)
+    assert payload["changes_only"] is True

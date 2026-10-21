@@ -11,6 +11,8 @@ build/
 dist/
 report.html
 report.json
+All policies*.html
+
 
 # Exportaciones locales: pueden contener datos reales
 exports/

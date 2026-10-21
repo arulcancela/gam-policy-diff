@@ -27,6 +27,25 @@ def test_demo_generates_reports_with_default_path(
     assert (tmp_path / "report.json").is_file()
 
 
+def test_demo_with_changes_only(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    assert main(["--demo", "--changes-only"]) == 0
+
+    output = capsys.readouterr().out
+    assert "Origen: acme-origen (15 políticas)" in output
+    assert "Destino: acme-destino (15 políticas)" in output
+    assert "Rompe flujo: 4" in output
+    assert "Requiere formación: 5" in output
+    assert "Sin impacto: 0" in output
+    assert (tmp_path / "report.html").is_file()
+    assert (tmp_path / "report.json").is_file()
+
+
 def test_without_inputs_shows_a_clear_error(capsys: pytest.CaptureFixture[str]) -> None:
     assert main([]) == 1
 

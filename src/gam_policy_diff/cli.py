@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="usa los fixtures incluidos en el repositorio",
     )
     parser.add_argument(
+        "--changes-only",
+        action="store_true",
+        help="incluye solo las políticas con cambios efectivos entre origen y destino",
+    )
+    parser.add_argument(
         "--out",
         metavar="FICHERO",
         default="report.html",
@@ -72,6 +77,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not any(entry.changed for entry in entries):
         print("No hay diferencias entre los tenants.")
         return 2
+    if args.changes_only:
+        entries = [entry for entry in entries if entry.changed]
     counts = Counter(entry.impact for entry in entries)
     for impact in IMPACT_ORDER:
         print(f"{impact.label}: {counts[impact]}")
@@ -81,6 +88,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             old_tenant=old_set.tenant,
             new_tenant=new_set.tenant,
             html_path=args.out,
+            changes_only=args.changes_only,
         )
     except OutputError as exc:
         print(f"Error: {exc}", file=sys.stderr)
